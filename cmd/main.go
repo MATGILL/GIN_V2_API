@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 
 	"github.com/MATGILL/GIN_V2/cmd/api"
@@ -13,8 +14,8 @@ func main() {
 	dbConfig := db.DbConfig{
 		Username: config.Envs.DBUser,
 		Password: config.Envs.DBPassword,
-		Host:     config.Envs.PublicHost,
-		Port:     config.Envs.Port,
+		Host:     config.Envs.DBHost,
+		Port:     config.Envs.DBPort,
 		DBName:   config.Envs.DBName,
 	}
 	db, err := db.NewPostgresDB(dbConfig)
@@ -22,8 +23,19 @@ func main() {
 		log.Fatal(err)
 	}
 
+	initStorage(db)
+
 	server := api.NewApiServer(":8080", db)
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func initStorage(db *sql.DB) {
+	err := db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("DB : Successfully connected.")
 }

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -13,7 +12,8 @@ type Config struct {
 	Port       string
 	DBUser     string
 	DBPassword string
-	DBAddress  string
+	DBHost     string
+	DBPort     string
 	DBName     string
 }
 
@@ -28,8 +28,9 @@ func initConfig() Config {
 		Port:       getEnv("PORT", "8080"),
 		DBUser:     getEnv("DB_USER", "postgres"),
 		DBPassword: getEnv("DB_PASSWORD", "postgres"),
-		DBAddress:  fmt.Sprintf("%s:%s", getEnv("DB_HOST", "127.0.0.1"), getEnv("DB_PORT", "3306")),
-		DBName:     getEnv("DB_NAME", "GIN_V2_API"),
+		DBHost:     getEnv("DB_HOST", "127.0.0.1"),
+		DBPort:     getEnv("DB_PORT", "5432"),
+		DBName:     getEnv("DB_NAME", "GIN_DATABASE"),
 	}
 }
 
