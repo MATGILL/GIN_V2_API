@@ -18,21 +18,21 @@ func NewRepository(db *sql.DB) *UserRepository {
 }
 
 func (r *UserRepository) GetUserByEmail(email string) (*types.User, error) {
-	rows, err := r.db.Query("SELECT user FROM users WHERE user.email = ?", email)
+	query := `SELECT id, first_name, last_name, email, password FROM users WHERE email = $1`
+
+	rows, err := r.db.Query(query, email)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	//create an empty pointer to user
 	user := new(types.User)
-	for rows.Next() {
-		user, err = ScanRowIntoUser(rows)
+	if rows.Next() {
+		err = rows.Scan(&user.ID, &user.Firstname, &user.Lastname, &user.Email, &user.Password)
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	if user.ID == 0 {
+	} else {
 		return nil, fmt.Errorf("user not found")
 	}
 

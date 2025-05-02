@@ -10,17 +10,17 @@ func ParseJson(r *http.Request, dto any) error {
 	if r.Body == nil {
 		return fmt.Errorf("missing request body")
 	}
-	err := json.NewDecoder(r.Body).Decode(dto)
-	return err
+	return json.NewDecoder(r.Body).Decode(dto)
 }
 
 func WriteJSON(w http.ResponseWriter, status int, output any) error {
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(output)
-
 }
 
 func WriteError(w http.ResponseWriter, status int, err error) {
-	WriteJSON(w, status, map[string]string{"error:": err.Error()})
+	if jsonErr := WriteJSON(w, status, map[string]string{"error": err.Error()}); jsonErr != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}
 }
