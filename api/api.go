@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/MATGILL/GIN_V2/service/user"
+	"github.com/MATGILL/GIN_V2/api/service/user"
 	"github.com/gorilla/mux"
 )
 

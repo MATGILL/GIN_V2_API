@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/MATGILL/GIN_V2/cmd/api"
+	"github.com/MATGILL/GIN_V2/api"
 	"github.com/MATGILL/GIN_V2/config"
 	"github.com/MATGILL/GIN_V2/db"
 )
