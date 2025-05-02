@@ -26,7 +26,10 @@ func (s *ApiServer) Run() error {
 
 	subRouter := router.PathPrefix("/api/v1").Subrouter()
 
-	userHandler := user.NewHandler()
+	//Look in depth here for understand di and add a service layer
+	userRepository := user.NewRepository(s.db)
+	userHandler := user.NewHandler(userRepository)
+
 	userHandler.RegisterRoutes(subRouter)
 
 	log.Println("Listenning on ", s.addr)
