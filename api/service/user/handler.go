@@ -19,11 +19,6 @@ func NewHandler(repository types.UserRepository) *Handler {
 	return &Handler{repository: repository}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
-	router.POST("/login", h.HandleLogin)
-	router.POST("/register", h.HandleRegister)
-}
-
 func (h *Handler) HandleLogin(c *gin.Context) {
 	var userDto types.LoginUserDto
 	if err := c.ShouldBindJSON(&userDto); err != nil {

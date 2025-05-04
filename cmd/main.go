@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	//Database configuration
+	// Configuration de la base de données
 	dbConfig := db.DbConfig{
 		Username: config.Envs.DBUser,
 		Password: config.Envs.DBPassword,
@@ -23,8 +23,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Initialisation du stockage
 	initStorage(db)
 
+	// Création et démarrage du serveur API
 	server := api.NewApiServer(":8080", db)
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
@@ -32,6 +34,7 @@ func main() {
 }
 
 func initStorage(db *sql.DB) {
+	// Test de connexion à la base de données
 	err := db.Ping()
 	if err != nil {
 		log.Fatal(err)

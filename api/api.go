@@ -22,12 +22,34 @@ func NewApiServer(addr string, db *sql.DB) *ApiServer {
 
 func (s *ApiServer) Run() error {
 	router := gin.Default()
-	api := router.Group("/api/v1")
 
-	userRepository := user.NewRepository(s.db)
-	userHandler := user.NewHandler(userRepository)
-	userHandler.RegisterRoutes(api)
+	// Appliquer le middleware ici si nécessaire
+	s.applyMiddleware(router)
+
+	// Configuration des routes de l'API
+	api := router.Group("/api/v1")
+	s.configureRoutes(api)
 
 	log.Println("Listening on", s.addr)
 	return router.Run(s.addr)
+}
+
+func (s *ApiServer) applyMiddleware(router *gin.Engine) {
+	// Exemples de middleware : Log, Auth, etc.
+	// router.Use(middleware.SomeMiddleware())
+
+	// Par exemple, un middleware de log
+	router.Use(func(c *gin.Context) {
+		log.Printf("Request: %s %s", c.Request.Method, c.Request.URL)
+		c.Next()
+	})
+}
+
+func (s *ApiServer) configureRoutes(router *gin.RouterGroup) {
+	// Initialisation des handlers
+	userRepository := user.NewRepository(s.db)
+	userHandler := user.NewHandler(userRepository)
+
+	// Inscription des routes avec la fonction RegisterRoutes
+	RegisterRoutes(router, userHandler)
 }
