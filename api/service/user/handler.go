@@ -28,7 +28,30 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 }
 
 func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
+	var userDto types.LoginUserDto
+	if err := utils.ParseJson(r, &userDto); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
 
+	//validate the dto
+	if err := utils.Validate.Struct(userDto); err != nil {
+		error := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid dto %v", error))
+		return
+	}
+
+	user, err := h.repository.GetUserByEmail(userDto.Email)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("not found, invalid email or password"))
+		return
+	}
+
+	if !auth.ComparePassword(user.Password, []byte(userDto.Password)) {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("not found, invalid email or password"))
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"token": "token"}) //TODO change avec le token
 }
 
 func (h *Handler) HandleRegister(w http.ResponseWriter, r *http.Request) {
