@@ -17,7 +17,7 @@ func TestUserServiceHandler(t *testing.T) {
 	handler := NewHandler(userRepository)
 
 	t.Run("Should failed if the user payload is invalid", func(t *testing.T) {
-		userDto := types.RegisterUser{
+		userDto := types.RegisterUserDto{
 			Firstname: "fname",
 			Lastname:  "Lname",
 			Email:     "invalid", // not a correct email
@@ -43,7 +43,7 @@ func TestUserServiceHandler(t *testing.T) {
 	})
 
 	t.Run("Should correctly register the user", func(t *testing.T) {
-		userDto := types.RegisterUser{
+		userDto := types.RegisterUserDto{
 			Firstname: "fname",
 			Lastname:  "Lname",
 			Email:     "email@gmail.com", // not a correct email

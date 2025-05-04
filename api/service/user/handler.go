@@ -32,7 +32,7 @@ func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleRegister(w http.ResponseWriter, r *http.Request) {
-	var userDto types.RegisterUser
+	var userDto types.RegisterUserDto
 	if err := utils.ParseJson(r, &userDto); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return

@@ -17,7 +17,7 @@ type User struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-type RegisterUser struct {
+type RegisterUserDto struct {
 	Firstname string `json:"firstName" validate:"required"`
 	Lastname  string `json:"lastName" validate:"required"`
 	Email     string `json:"email" validate:"required,email"`
