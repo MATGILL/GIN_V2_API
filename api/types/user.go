@@ -4,6 +4,7 @@ import "time"
 
 type UserRepository interface {
 	GetUserByEmail(email string) (*User, error)
+	GetUserById(email int) (*User, error)
 	CreateUser(User) error
 }
 

@@ -18,7 +18,7 @@ func NewRepository(db *sql.DB) *UserRepository {
 }
 
 func (r *UserRepository) GetUserByEmail(email string) (*types.User, error) {
-	query := `SELECT id, first_name, last_name, email, password FROM users WHERE email = $1`
+	query := `SELECT id, firstName, lastName, email, password FROM users WHERE email = $1`
 
 	rows, err := r.db.Query(query, email)
 	if err != nil {
@@ -28,11 +28,13 @@ func (r *UserRepository) GetUserByEmail(email string) (*types.User, error) {
 
 	user := new(types.User)
 	if rows.Next() {
-		err = rows.Scan(&user.ID, &user.Firstname, &user.Lastname, &user.Email, &user.Password)
+		user, err = ScanRowIntoUser(rows)
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	}
+
+	if user.ID == 0 {
 		return nil, fmt.Errorf("user not found")
 	}
 
@@ -40,7 +42,36 @@ func (r *UserRepository) GetUserByEmail(email string) (*types.User, error) {
 }
 
 func (r *UserRepository) CreateUser(user types.User) error {
+	query := `INSERT INTO users (firstName, lastName, email, password) VALUES($1, $2, $3, $4)`
+	_, err := r.db.Query(query, user.Firstname, user.Lastname, user.Email, user.Password)
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+func (r *UserRepository) GetUserById(id int) (*types.User, error) {
+	query := `SELECT id, firstName, lastName, email, password FROM users WHERE id = $1`
+
+	rows, err := r.db.Query(query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	user := new(types.User)
+	if rows.Next() {
+		user, err = ScanRowIntoUser(rows)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if user.ID == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	return user, nil
 }
 
 // Utils
