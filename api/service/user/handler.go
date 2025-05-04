@@ -6,6 +6,7 @@ import (
 
 	"github.com/MATGILL/GIN_V2/api/service/auth"
 	"github.com/MATGILL/GIN_V2/api/types"
+	"github.com/MATGILL/GIN_V2/config"
 	"github.com/MATGILL/GIN_V2/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -38,39 +39,40 @@ func (h *Handler) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": "token"}) // TODO: generate real token
+	secret := []byte(config.Envs.JWTSecret)
+	token, err := auth.CreateJWT([]byte(secret), user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": token}) // TODO: generate real token
 }
 
 func (h *Handler) HandleRegister(c *gin.Context) {
 	var userDto types.RegisterUserDto
 
-	// Gin-native JSON binding
 	if err := c.ShouldBindJSON(&userDto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Validation avec validator
 	if err := utils.Validate.Struct(userDto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid dto", "details": err.Error()})
 		return
 	}
 
-	// Vérifie si l'utilisateur existe déjà
 	_, err := h.repository.GetUserByEmail(userDto.Email)
 	if err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user already exists"})
 		return
 	}
 
-	// Hash du mot de passe
 	hashedPassword, err := auth.HashPassword(userDto.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Création de l'utilisateur
 	err = h.repository.CreateUser(types.User{
 		Firstname: userDto.Firstname,
 		Lastname:  userDto.Lastname,

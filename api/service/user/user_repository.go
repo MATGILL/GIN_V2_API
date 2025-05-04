@@ -18,7 +18,7 @@ func NewRepository(db *sql.DB) *UserRepository {
 }
 
 func (r *UserRepository) GetUserByEmail(email string) (*types.User, error) {
-	query := `SELECT id, firstName, lastName, email, password FROM users WHERE email = $1`
+	query := `SELECT id, firstName, lastName, email, password, created_at FROM users WHERE email = $1`
 
 	rows, err := r.db.Query(query, email)
 	if err != nil {
@@ -55,7 +55,7 @@ func (r *UserRepository) GetUserById(id int) (*types.User, error) {
 
 	rows, err := r.db.Query(query, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("err1")
 	}
 	defer rows.Close()
 
@@ -63,7 +63,7 @@ func (r *UserRepository) GetUserById(id int) (*types.User, error) {
 	if rows.Next() {
 		user, err = ScanRowIntoUser(rows)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("err2")
 		}
 	}
 
