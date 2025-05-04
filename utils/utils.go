@@ -28,15 +28,3 @@ func ParseJson(r *http.Request, dto any) error {
 
 	return nil
 }
-
-func WriteJSON(w http.ResponseWriter, status int, output any) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	return json.NewEncoder(w).Encode(output)
-}
-
-func WriteError(w http.ResponseWriter, status int, err error) {
-	if jsonErr := WriteJSON(w, status, map[string]string{"error": err.Error()}); jsonErr != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-	}
-}

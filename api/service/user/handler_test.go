@@ -4,79 +4,65 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/MATGILL/GIN_V2/api/types"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUserServiceHandler(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	userRepository := &mockUserRepository{}
-	handler := NewHandler(userRepository)
+	h := NewHandler(userRepository)
+	r := gin.Default()
+	r.POST("/register", h.HandleRegister)
 
-	t.Run("Should failed if the user payload is invalid", func(t *testing.T) {
-		userDto := types.RegisterUserDto{
-			Firstname: "fname",
-			Lastname:  "Lname",
-			Email:     "invalid", // not a correct email
-			Password:  "password",
+	t.Run("invalid payload", func(t *testing.T) {
+		body := types.RegisterUserDto{
+			Firstname: "f",
+			Lastname:  "l",
+			Email:     "not-an-email",
+			Password:  "pass",
 		}
-
-		marshalled, _ := json.Marshal(userDto)
-
-		request, err := http.NewRequest("POST", "/register", bytes.NewBuffer(marshalled))
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		recorder := httptest.NewRecorder()
-		router := mux.NewRouter()
-		router.HandleFunc("/register", handler.HandleRegister)
-		router.ServeHTTP(recorder, request)
-
-		if recorder.Code != http.StatusBadRequest {
-			t.Errorf("Unexpected status code %d, got %d", http.StatusBadRequest, recorder.Code)
-		}
-
+		jsonBody, _ := json.Marshal(body)
+		req, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(jsonBody))
+		req.Header.Set("Content-Type", "application/json")
+		resp := httptest.NewRecorder()
+		r.ServeHTTP(resp, req)
+		assert.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
-	t.Run("Should correctly register the user", func(t *testing.T) {
-		userDto := types.RegisterUserDto{
-			Firstname: "fname",
-			Lastname:  "Lname",
-			Email:     "email@gmail.com", // not a correct email
+	t.Run("successful registration", func(t *testing.T) {
+		body := types.RegisterUserDto{
+			Firstname: "John",
+			Lastname:  "Doe",
+			Email:     "john@example.com",
 			Password:  "password",
 		}
-
-		marshalled, _ := json.Marshal(userDto)
-
-		request, err := http.NewRequest("POST", "/register", bytes.NewBuffer(marshalled))
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		recorder := httptest.NewRecorder()
-		router := mux.NewRouter()
-		router.HandleFunc("/register", handler.HandleRegister)
-		router.ServeHTTP(recorder, request)
-
-		if recorder.Code != http.StatusCreated {
-			t.Errorf("Unexpected status code %d, got %d", http.StatusCreated, recorder.Code)
-		}
+		jsonBody, _ := json.Marshal(body)
+		req, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(jsonBody))
+		req.Header.Set("Content-Type", "application/json")
+		resp := httptest.NewRecorder()
+		r.ServeHTTP(resp, req)
+		log.Println(resp.Code)
+		assert.Equal(t, http.StatusCreated, resp.Code)
 	})
 }
 
-// Mock the Repository
+// --- mockUserRepository ---
+
 type mockUserRepository struct{}
 
 func (m *mockUserRepository) GetUserByEmail(email string) (*types.User, error) {
-	return nil, fmt.Errorf("user not found")
+	return nil, fmt.Errorf("not found")
 }
 
 func (m *mockUserRepository) GetUserById(id int) (*types.User, error) {
-	return nil, fmt.Errorf("user not found")
+	return nil, fmt.Errorf("not found")
 }
 
 func (m *mockUserRepository) CreateUser(types.User) error {

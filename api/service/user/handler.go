@@ -7,82 +7,75 @@ import (
 	"github.com/MATGILL/GIN_V2/api/service/auth"
 	"github.com/MATGILL/GIN_V2/api/types"
 	"github.com/MATGILL/GIN_V2/utils"
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/gorilla/mux"
 )
 
-// the handler can take any dependency (for DI)
 type Handler struct {
 	repository types.UserRepository
 }
 
 func NewHandler(repository types.UserRepository) *Handler {
-	return &Handler{
-		repository: repository,
-	}
+	return &Handler{repository: repository}
 }
 
-func (h *Handler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/login", h.HandleLogin).Methods("POST")
-	router.HandleFunc("/register", h.HandleRegister).Methods("POST")
+func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
+	router.POST("/login", h.HandleLogin)
+	router.POST("/register", h.HandleRegister)
 }
 
-func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleLogin(c *gin.Context) {
 	var userDto types.LoginUserDto
-	if err := utils.ParseJson(r, &userDto); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
+	if err := c.ShouldBindJSON(&userDto); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	//validate the dto
 	if err := utils.Validate.Struct(userDto); err != nil {
-		error := err.(validator.ValidationErrors)
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid dto %v", error))
+		err := err.(validator.ValidationErrors)
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid dto %v", err)})
 		return
 	}
 
 	user, err := h.repository.GetUserByEmail(userDto.Email)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("not found, invalid email or password"))
+	if err != nil || !auth.ComparePassword(user.Password, []byte(userDto.Password)) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email or password"})
 		return
 	}
 
-	if !auth.ComparePassword(user.Password, []byte(userDto.Password)) {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("not found, invalid email or password"))
-	}
-
-	utils.WriteJSON(w, http.StatusOK, map[string]string{"token": "token"}) //TODO change avec le token
+	c.JSON(http.StatusOK, gin.H{"token": "token"}) // TODO: generate real token
 }
 
-func (h *Handler) HandleRegister(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleRegister(c *gin.Context) {
 	var userDto types.RegisterUserDto
-	if err := utils.ParseJson(r, &userDto); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
+
+	// Gin-native JSON binding
+	if err := c.ShouldBindJSON(&userDto); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	//validate the dto
+	// Validation avec validator
 	if err := utils.Validate.Struct(userDto); err != nil {
-		error := err.(validator.ValidationErrors)
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid dto %v", error))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid dto", "details": err.Error()})
 		return
 	}
 
-	//verify that the user exist
-	user, err := h.repository.GetUserByEmail(userDto.Email)
+	// Vérifie si l'utilisateur existe déjà
+	_, err := h.repository.GetUserByEmail(userDto.Email)
 	if err == nil {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("user with email %s already exists", userDto.Email))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user already exists"})
 		return
 	}
 
-	//hash the password
+	// Hash du mot de passe
 	hashedPassword, err := auth.HashPassword(userDto.Password)
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	//Create the user
+	// Création de l'utilisateur
 	err = h.repository.CreateUser(types.User{
 		Firstname: userDto.Firstname,
 		Lastname:  userDto.Lastname,
@@ -90,9 +83,9 @@ func (h *Handler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 		Password:  hashedPassword,
 	})
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, user)
+	c.JSON(http.StatusCreated, gin.H{"message": "user created"})
 }
