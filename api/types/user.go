@@ -4,6 +4,7 @@ import "time"
 
 type UserRepository interface {
 	GetUserByEmail(email string) (*User, error)
+	CreateUser(User) error
 }
 
 type User struct {
@@ -16,8 +17,8 @@ type User struct {
 }
 
 type RegisterUser struct {
-	Firstname string `json:"firstName"`
-	Lastname  string `json:"lastName"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
+	Firstname string `json:"firstName" validate:"required"`
+	Lastname  string `json:"lastName" validate:"required"`
+	Email     string `json:"email" validate:"required,email"`
+	Password  string `json:"password" validate:"required,min=3,max=20"`
 }

@@ -39,6 +39,11 @@ func (r *UserRepository) GetUserByEmail(email string) (*types.User, error) {
 	return user, nil
 }
 
+func (r *UserRepository) CreateUser(user types.User) error {
+	return nil
+}
+
+// Utils
 func ScanRowIntoUser(rows *sql.Rows) (*types.User, error) {
 	user := new(types.User)
 	err := rows.Scan(

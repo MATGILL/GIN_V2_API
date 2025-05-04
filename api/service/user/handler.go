@@ -1,10 +1,13 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/MATGILL/GIN_V2/api/service/auth"
 	"github.com/MATGILL/GIN_V2/api/types"
-	"github.com/MATGILL/GIN_V2/api/utils"
+	"github.com/MATGILL/GIN_V2/utils"
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
 
@@ -35,12 +38,37 @@ func (h *Handler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//validate the dto
+	if err := utils.Validate.Struct(userDto); err != nil {
+		error := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid dto %v", error))
+	}
+
 	//verify that the user exist
 	user, err := h.repository.GetUserByEmail(userDto.Email)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
+	if err == nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("user with email %s already exists", userDto.Email))
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, user)
+	//hash the password
+	hashedPassword, err := auth.HashPassword(userDto.Password)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	//Create the user
+	err = h.repository.CreateUser(types.User{
+		Firstname: userDto.Firstname,
+		Lastname:  userDto.Lastname,
+		Email:     userDto.Email,
+		Password:  hashedPassword,
+	})
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, user)
 }
