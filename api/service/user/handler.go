@@ -42,6 +42,7 @@ func (h *Handler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	if err := utils.Validate.Struct(userDto); err != nil {
 		error := err.(validator.ValidationErrors)
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid dto %v", error))
+		return
 	}
 
 	//verify that the user exist
