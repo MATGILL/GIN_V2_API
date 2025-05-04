@@ -34,17 +34,6 @@ func (s *ApiServer) Run() error {
 	return router.Run(s.addr)
 }
 
-func (s *ApiServer) applyMiddleware(router *gin.Engine) {
-	// Exemples de middleware : Log, Auth, etc.
-	// router.Use(middleware.SomeMiddleware())
-
-	// Par exemple, un middleware de log
-	router.Use(func(c *gin.Context) {
-		log.Printf("Request: %s %s", c.Request.Method, c.Request.URL)
-		c.Next()
-	})
-}
-
 func (s *ApiServer) configureRoutes(router *gin.RouterGroup) {
 	// Initialisation des handlers
 	userRepository := user.NewRepository(s.db)
@@ -52,4 +41,15 @@ func (s *ApiServer) configureRoutes(router *gin.RouterGroup) {
 
 	// Inscription des routes avec la fonction RegisterRoutes
 	RegisterRoutes(router, userHandler)
+}
+
+func (s *ApiServer) applyMiddleware(router *gin.Engine) {
+	// Exemples de middleware : Log, Auth, etc.
+	// router.Use(middleware.SomeMiddleware())
+
+	// Par exemple, un middleware de log
+	router.Use(func(c *gin.Context) {
+		log.Printf("Requeeeeest: %s %s", c.Request.Method, c.Request.URL)
+		c.Next()
+	})
 }
